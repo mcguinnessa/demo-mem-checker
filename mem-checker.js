@@ -4,11 +4,13 @@ const {MongoClient} = require('mongodb');
 const DAY_S = 24 * 60 * 60;
 const DAY_MS = DAY_S * 1000;
 const HOUR_MS = 60 * 60 * 1000;
-const INTERVAL_S = 30 * 60;
+const INTERVAL_S = 60 * 60;
 const INTERVAL_MS = INTERVAL_S * 1000;
 
 const max_mem = 87;
 const min_mem = 8;
+const free_space = 13;
+var mem_usage = min_mem;
 
 //nst hourly_weighting = [1, 2, 3, 4, 5, 6, 7, 8, 9 10, 11, 12, 13, 14 ,15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
 const hourly_weighting = [1, 2, 1, 1, 1, 1, 2, 2, 5,  7,  8,  9, 10, 10, 10,  9,  7,  5,  5,  5,  5,  3,  2,  1]
@@ -22,12 +24,25 @@ function sleep(ms) {
 
 async function getValue(a_timestamp){
   var record_hour = a_timestamp.getHours();
-  weighting = hourly_weighting[record_hour];
+  weighting = hourly_weighting[record_hour % 24];
 
-  const ceiling = (max_mem / 10) * weighting;
-  var mem_usage = min_mem + Math.floor(Math.random() * ceiling);
+//  const ceiling = (max_mem / 10) * weighting;
+//  var mem_usage = min_mem + Math.floor(Math.random() * ceiling);
+	//
+  if (81 <= Math.floor(Math.random() * 100)){
+    console.log("Free Mem");
+    mem_usage -= free_space;
+  }
 
-  console.log("TIME:" + a_timestamp + " HOUR:" + record_hour + " WEIGHTING:" + weighting + " CEILING:" + ceiling + " MEM:" + mem_usage);
+  incr = (Math.floor(Math.random() * (((30 / 10) * weighting) ))) - 3;
+  mem_usage += incr;
+  if (mem_usage > max_mem) {mem_usage = max_mem;}
+  if (mem_usage < min_mem) {mem_usage = min_mem;}
+
+  //mem_usage = min_mem + Math.floor(Math.random() * (((max_mem - min_mem) / 10) * weighting))
+
+
+  console.log("TIME:" + a_timestamp + " HOUR:" + record_hour + " WEIGHTING:" + weighting + " INCR:" + incr + " MEM:" + mem_usage);
   return mem_usage;
 }
 
@@ -53,9 +68,10 @@ async function run(){
     const d_res = await metric_record.deleteMany({"$and": [{timestamp: {"$lt": now }}, { "memUsage": {$exists : true } }]} )
     console.log("Delete:" + d_res.deletedCount);
 
-    var yesterday = new Date(now - DAY_MS);
-    var date_record = yesterday;
-    console.log("Yesterday:" + yesterday)
+    var last_week = new Date(now - (DAY_MS * 7));
+    var date_record = last_week;
+    console.log("Last Week:" + last_week)
+
 
     while (date_record <= now){
 
