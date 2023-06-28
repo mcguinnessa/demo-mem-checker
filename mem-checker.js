@@ -7,9 +7,13 @@ const HOUR_MS = 60 * 60 * 1000;
 const INTERVAL_S = 60 * 60;
 const INTERVAL_MS = INTERVAL_S * 1000;
 
-const max_mem = 87;
-const min_mem = 8;
-const free_space = 13;
+const max_mem = 99;
+const min_mem = 6;
+const normal_high = 21;
+const spike_peak = 50;
+var spike = 0;
+
+const free_space = 23;
 var mem_usage = min_mem;
 
 //nst hourly_weighting = [1, 2, 3, 4, 5, 6, 7, 8, 9 10, 11, 12, 13, 14 ,15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
@@ -29,20 +33,34 @@ async function getValue(a_timestamp){
 //  const ceiling = (max_mem / 10) * weighting;
 //  var mem_usage = min_mem + Math.floor(Math.random() * ceiling);
 	//
-  if (81 <= Math.floor(Math.random() * 100)){
+  if (91 <= Math.floor(Math.random() * 100)){
     console.log("Free Mem");
     mem_usage -= free_space;
   }
 
-  incr = (Math.floor(Math.random() * (((30 / 10) * weighting) ))) - 3;
-  mem_usage += incr;
+  if (spike == 0 ) {
+    if (96 <= Math.floor(Math.random() * 100)){
+      console.log("Spike Mem");
+      spike = Math.floor(Math.random() * ((spike_peak / 10) * weighting))
+    }
+  } else if (spike > 0){
+     spike = 0 - spike;
+  } else {
+     spike = 0
+  }
+  mem_usage = min_mem + (Math.floor(Math.random() * (((normal_high - min_mem) / 10 ) * weighting)))
+  mem_usage += spike
+
+//  incr = (Math.floor(Math.random() * (((30 / 10) * weighting) ))) - 3;
+//  mem_usage += incr;
   if (mem_usage > max_mem) {mem_usage = max_mem;}
   if (mem_usage < min_mem) {mem_usage = min_mem;}
 
   //mem_usage = min_mem + Math.floor(Math.random() * (((max_mem - min_mem) / 10) * weighting))
 
 
-  console.log("TIME:" + a_timestamp + " HOUR:" + record_hour + " WEIGHTING:" + weighting + " INCR:" + incr + " MEM:" + mem_usage);
+  //console.log("TIME:" + a_timestamp + " HOUR:" + record_hour + " WEIGHTING:" + weighting + " INCR:" + incr + " MEM:" + mem_usage);
+  console.log("TIME:" + a_timestamp + " HOUR:" + record_hour + " WEIGHTING:" + weighting +" SPIKE:" + spike + " MEM:" + mem_usage);
   return mem_usage;
 }
 
